@@ -22,34 +22,25 @@ void setup() {
   pinMode(DIR4, OUTPUT);
   pinMode(EN1, OUTPUT);
   pinMode(EN2, OUTPUT);
-  pinMode(SERVO1, OUTPUT);
-  pinMode(SERVO2, OUTPUT);
-  
 
   digitalWrite(EN1, HIGH);
   digitalWrite(EN2, HIGH);
+
   servo.attach(SERVO1);
-  servo.write(90);
+  servo.write(90);   // default position
+
   servo2.attach(SERVO2);
+  servo2.write(0);   // closed by default
+
   Modulino.begin();
   thermo.begin();
   Monitor.begin();
   Monitor.println("starting");
 }
 
-
-// ------- water dispense -----
-void waterDispense() {
-    float humidity = thermo.getHumidity();
-    Monitor.print("Humidity: ");
-    Monitor.println(humidity);
-    servo2.write(180);   // open
-    delay(1000);         // stay open 1 second
-    servo2.write(0);     // close
-  
-}
-
-// -------- movements --------
+//
+// -------- movement --------
+//
 void forward(int t) {
   digitalWrite(DIR1, LOW);
   digitalWrite(DIR2, HIGH);
@@ -59,18 +50,9 @@ void forward(int t) {
   stopMotors();
 }
 
-void leftTurn(int t) {
+void backward(int t) {
   digitalWrite(DIR1, HIGH);
   digitalWrite(DIR2, LOW);
-  digitalWrite(DIR3, LOW);
-  digitalWrite(DIR4, HIGH);
-  delay(t);
-  stopMotors();
-}
-
-void rightTurn(int t) {
-  digitalWrite(DIR1, LOW);
-  digitalWrite(DIR2, HIGH);
   digitalWrite(DIR3, HIGH);
   digitalWrite(DIR4, LOW);
   delay(t);
@@ -85,117 +67,22 @@ void stopMotors() {
   delay(300);
 }
 
-// -------- 180 degree turn --------
-void turnAround() {
-  rightTurn(1200);  // 
+//
+// -------- water dispense --------
+//
+void waterDispense() {
+  float humidity = thermo.getHumidity();
+  Monitor.print("Humidity: ");
+  Monitor.println(humidity);
+
+  servo2.write(180);   // open
+  delay(1000);
+  servo2.write(0);     // close
 }
 
-// -------- path --------
-void path(int i) {
-  int j = 0;
-  
-  while (j < i) {
-    
-    forward(3000);
-    rightTurn(500);
-  
-    forward(1000);
-    rightTurn(500);
-  
-    forward(3000);
-    leftTurn(500);
-  
-    forward(1000);
-    leftTurn(500);
-
-    j++;
-    
-  }
-}
-
-// -------- path seed --------
-void path1(int i) {
-
-int j = 0;
-  
-  while (j < i) {
-     
-    forward(1000);
-    dropSeed();
-    forward(1000);
-    dropSeed();
-    forward(1000);
-    dropSeed();
-    rightTurn(500);  
-      
-    forward(1000);
-    rightTurn(500);
-  
-    forward(1000);
-    dropSeed();
-    forward(1000);
-    dropSeed();
-    forward(1000);
-    dropSeed();
-    leftTurn(500);
-  
-    forward(1000);
-    leftTurn(500);
-    
-    forward(1000);
-    dropSeed();
-    forward(1000);
-    dropSeed();
-    forward(1000);
-    dropSeed();
-    
-    j++;
-  }
-  
-}
-
-// --------- water path --------
-void path2(int i) {
-
-int j = 0;
-  
-  while (j < i) {
-     
-    forward(1000);
-    waterDispense();
-    forward(1000);
-    waterDispense();
-    forward(1000);
-    waterDispense();
-    rightTurn(500);  
-      
-    forward(1000);
-    rightTurn(500);
-  
-    forward(1000);
-    waterDispense();
-    forward(1000);
-    waterDispense();
-    forward(1000);
-    waterDispense();
-    leftTurn(500);
-  
-    forward(1000);
-    leftTurn(500);
-    
-    forward(1000);
-    waterDispense();
-    forward(1000);
-    waterDispense();
-    forward(1000);
-    waterDispense();
-    
-    j++;
-  }
-  
-}
-
-
+//
+// -------- seed drop --------
+//
 void dropSeed() {
   Monitor.println("dropping seed");
   servo.write(0);
@@ -204,43 +91,136 @@ void dropSeed() {
   delay(1000);
 }
 
-// -------- llops forever --------
-bool firstRun = true;  // 
+//
+// -------- simple movement path --------
+//
+void path(int i) {
+  int j = 0;
+
+  while (j < i) {
+
+    // forward
+    forward(3000);
+    forward(1000);
+    forward(3000);
+    forward(1000);
+
+    // backward (return)
+    backward(1000);
+    backward(3000);
+    backward(1000);
+    backward(3000);
+
+    j++;
+  }
+}
+
+//
+// -------- seed path --------
+//
+void path1(int i) {
+  int j = 0;
+
+  while (j < i) {
+
+    // forward + seed drops
+    forward(1000); dropSeed();
+    forward(1000); dropSeed();
+    forward(1000); dropSeed();
+
+    forward(1000); dropSeed();
+    forward(1000); dropSeed();
+    forward(1000); dropSeed();
+
+    forward(1000); dropSeed();
+    forward(1000); dropSeed();
+    forward(1000); dropSeed();
+
+    // backward return
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+
+    j++;
+  }
+}
+
+//
+// -------- watering path --------
+//
+void path2(int i) {
+  int j = 0;
+
+  while (j < i) {
+
+    // forward + water
+    forward(1000); waterDispense();
+    forward(1000); waterDispense();
+    forward(1000); waterDispense();
+
+    forward(1000); waterDispense();
+    forward(1000); waterDispense();
+    forward(1000); waterDispense();
+
+    forward(1000); waterDispense();
+    forward(1000); waterDispense();
+    forward(1000); waterDispense();
+
+    // backward return
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+    backward(1000);
+
+    j++;
+  }
+}
+
+//
+// -------- loop control --------
+//
+bool firstRun = true;
 unsigned long lastWaterTime = 0;
 
 void loop() {
   float humidity = thermo.getHumidity();
   Monitor.print("Humidity: ");
   Monitor.println(humidity);
-  unsigned long currentTime = millis();
 
+  unsigned long currentTime = millis();
   unsigned long interval;
 
   if (humidity < 40) {
-    interval = 6UL * 60 * 60 * 1000;   // 6 hours
+    interval = 6UL * 60 * 60 * 1000;
   } else if (humidity < 70) {
-    interval = 12UL * 60 * 60 * 1000;  // 12 hours
+    interval = 12UL * 60 * 60 * 1000;
   } else {
-    interval = 24UL * 60 * 60 * 1000;  // 24 hours (humid)
+    interval = 24UL * 60 * 60 * 1000;
   }
 
   if (firstRun) {
-    path1(1);
-    turnAround();
-    path2(2);
-    turnAround();
+    path1(1);   // seed once
+    path2(2);   // water twice
     lastWaterTime = currentTime;
     firstRun = false;
   }
 
-  // Check if enough time passed
   if (currentTime - lastWaterTime >= interval) {
     Monitor.println("Watering...");
     path2(2);
-    turnAround();
     lastWaterTime = currentTime;
   } else {
     path(2);
-    turnAround();
   }
 }
